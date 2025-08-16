@@ -1,61 +1,104 @@
-# Local Food Wastage Management System
+Local Food Wastage Management System
+📌 Overview
 
-Step 1: Project skeleton ready.
-# Local Food Wastage System
+The Local Food Wastage Management System is a Streamlit-based web application designed to minimize food wastage by connecting food providers (e.g., restaurants, households, shops) with receivers (e.g., NGOs, shelters, needy people).
 
-## Owner
+The system helps track, manage, and visualize surplus food, enabling users to list, claim, and monitor food distribution while generating business insights.
 
-**Name:** Sadhna Shukla  
-**Email:** shuklasadhna72@gmail.com
+🚀 Features
 
-## Overview
+Dashboard – KPIs and visual analytics for providers, receivers, listings, and claims.
 
-Local Food Wastage System is a project created to connect food providers and receivers for sharing surplus food. Its main purpose is to reduce food wastage and deliver food to those in need.
+CRUD Operations – Add, update, and delete Providers, Receivers, and Food Listings.
 
-## Features
+Claims Management – Track food claims and monitor their status.
 
-- Registration for providers and receivers
-- Facility to list and claim food items
-- Dashboard with summary of total providers, receivers, listings, and claims
-- User-friendly interface
+Business Insights – Identify unclaimed food, expired stock, and waste-prone provider types.
 
-## Installation
+Data Preparation – Load CSV data into an SQLite database automatically.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/SadhnaShukla/Local-Food-Wastage-System.git
-   ```
-2. Go to the project directory:
-   ```bash
-   cd Local-Food-Wastage-System
-   ```
-3. Install dependencies (update this step according to your tech stack):
-   ```bash
-   # Example for Node.js
-   npm install
-   ```
-4. Start the application:
-   ```bash
-   # Example for Node.js
-   npm start
-   ```
+Query Testing – Validate SQL queries for debugging and consistency.
 
-## Usage
+🗂️ Project Structure
+Local-Food-Wastage-System/
+│── app.py                # Main Streamlit app (dashboard, CRUD, insights)
+│── crud_operations.py    # CRUD helper functions (future expansion)
+│── sql_queries.py        # Centralized SQL query definitions
+│── data_preparation.py   # Script to load CSV data into SQLite DB
+│── test_queries.py       # Test runner for SQL queries
+│── requirements.txt      # Python dependencies
+│── README.md             # Project documentation
+│── database/food_wastage.db   # SQLite database (generated)
+│── data/                 # Folder for CSV input files
 
-1. Register as a provider or receiver.
-2. Providers can list surplus food.
-3. Receivers can claim available food.
-4. View your statistics on the dashboard.
+⚙️ Installation & Setup
 
-## Contributing
+Clone the repository
 
-If you want to contribute:
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/YourFeature`).
-3. Commit your changes (`git commit -am 'Add new feature'`).
-4. Push to the branch (`git push origin feature/YourFeature`).
-5. Create a pull request.
+git clone https://github.com/SadhnaShukla/Local-Food-Wastage-System.git
+cd Local-Food-Wastage-System
 
-## Contact
 
-For any queries or support, please open an issue or email the owner at shuklasadhna72@gmail.com.
+Create a virtual environment (recommended)
+
+python -m venv venv
+source venv/bin/activate   # For Linux/Mac
+venv\Scripts\activate      # For Windows
+
+
+Install dependencies
+
+pip install -r requirements.txt
+
+
+Prepare the database
+
+Place your CSV files inside the data/ folder:
+
+providers_data.csv
+
+receivers_data.csv
+
+food_listings_data.csv
+
+claims_data.csv
+
+Run:
+
+python data_preparation.py
+
+
+Run the application
+
+streamlit run app.py
+
+📊 Usage
+
+Dashboard → View key statistics and food wastage insights.
+
+CRUD → Add/manage providers, receivers, and food listings.
+
+Insights → Explore unclaimed food percentage, expired stock, and waste-prone providers.
+
+🧪 Testing SQL Queries
+
+To validate all SQL queries defined in sql_queries.py, run:
+
+python test_queries.py
+
+📦 Requirements
+
+Main dependencies (see requirements.txt):
+
+streamlit
+
+pandas
+
+matplotlib
+
+👩‍💻 Author
+
+Name: Sadhna Shukla
+Email: shuklasadhna72@gmail.com
+
+✨ This project was built as part of an initiative to reduce food wastage by leveraging technology for social good.
