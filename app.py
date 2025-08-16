@@ -11,7 +11,7 @@ import streamlit as st
 import altair as alt
 from datetime import date
 
-DB_PATH =  "database/food_wastage.db"
+DB_PATH = "database/food_wastage.db"
 
 # ---------- DB helpers ----------
 def run_query(query: str, params: tuple | None = None) -> pd.DataFrame:
@@ -204,6 +204,7 @@ def dashboard():
     st.dataframe(unclaimed, use_container_width=True)
 
 # ---------- CRUD ----------
+# ---------- CRUD ----------
 def crud():
     st.header("Manage Data (CRUD)")
 
@@ -224,7 +225,7 @@ def crud():
                     "INSERT INTO providers (Name, Type, Address, City, Contact) VALUES (?, ?, ?, ?, ?);",
                     (name, ptype, addr, city, contact)
                 )
-                if ok: st.success("Provider added.")
+                if ok: st.success("✅ Provider added.")
 
         st.subheader("Providers (table)")
         st.dataframe(run_query("SELECT * FROM providers;") if table_exists("providers") else pd.DataFrame(),
@@ -244,7 +245,7 @@ def crud():
                     "INSERT INTO receivers (Name, Type, City, Contact) VALUES (?, ?, ?, ?);",
                     (name, rtype, city, contact)
                 )
-                if ok: st.success("Receiver added.")
+                if ok: st.success("✅ Receiver added.")
 
         st.subheader("Receivers (table)")
         st.dataframe(run_query("SELECT * FROM receivers;") if table_exists("receivers") else pd.DataFrame(),
@@ -254,7 +255,19 @@ def crud():
     with tab3:
         st.subheader("Add Food Listing")
         providers_df = run_query("SELECT Provider_ID, Name FROM providers;") if table_exists("providers") else pd.DataFrame()
-        provider_map = {row["Name"]: int(row["Provider_ID"]) for _, row in providers_df.iterrows()} if not providers_df.empty else {}
+
+        if providers_df.empty:
+            st.warning("⚠️ No providers available. Please add a provider first.")
+            provider_map = {}
+        else:
+            # Drop invalid/null IDs or Names
+            providers_df = providers_df.dropna(subset=["Provider_ID", "Name"])
+
+            # Ensure Provider_ID is int
+            providers_df["Provider_ID"] = providers_df["Provider_ID"].astype(int)
+
+            # Map Name -> ID
+            provider_map = dict(zip(providers_df["Name"], providers_df["Provider_ID"]))
 
         with st.form("add_food"):
             food_name = st.text_input("Food Name")
@@ -269,9 +282,9 @@ def crud():
                     "INSERT INTO food_listings (Food_Name, Quantity, Expiry_Date, Provider_ID, Provider_Type, Location) VALUES (?, ?, ?, ?, ?, ?);",
                     (food_name, int(qty), str(exp), provider_map[provider_name], ptype, loc)
                 )
-                if ok: st.success("Food listing added.")
+                if ok: st.success("✅ Food listing added.")
             elif submitted:
-                st.error("Add a provider first.")
+                st.error("⚠️ Add a provider first.")
 
         st.subheader("Update Food Listing")
         listings = run_query("SELECT Food_ID, Food_Name, Quantity, DATE(Expiry_Date) AS Expiry_Date FROM food_listings;") if table_exists("food_listings") else pd.DataFrame()
@@ -285,7 +298,7 @@ def crud():
             if st.button("Save Update"):
                 ok = exec_query("UPDATE food_listings SET Quantity=?, Expiry_Date=? WHERE Food_ID=?;",
                                 (int(new_qty), str(new_date), selected_id))
-                if ok: st.success("Updated.")
+                if ok: st.success("✅ Updated.")
 
         st.subheader("Delete Food Listing")
         listings2 = run_query("SELECT Food_ID, Food_Name FROM food_listings;") if table_exists("food_listings") else pd.DataFrame()
@@ -296,7 +309,8 @@ def crud():
             del_id = int(row2.split(" – ")[0])
             if st.button("Delete"):
                 ok = exec_query("DELETE FROM food_listings WHERE Food_ID=?;", (del_id,))
-                if ok: st.success("Deleted.")
+                if ok: st.success("✅ Deleted.")
+\
 
 # ---------- Insights ----------
 def insights():
@@ -343,20 +357,4 @@ elif page == "CRUD":
     crud()
 else:
     insights()
-
-df_monthly = run_query("""
-    SELECT 
-      CASE 
-        WHEN instr(Timestamp,'-') > 0 
-          THEN substr(Timestamp,7,4) || '-' || substr(Timestamp,1,2)
-        WHEN instr(Timestamp,'/') > 0 
-          THEN substr(Timestamp,-4) || '-' || printf('%02d', CAST(substr(Timestamp,1,instr(Timestamp,'/')-1) AS INT))
-        ELSE 'Unknown'
-      END AS Month,
-      COUNT(*) AS Count
-    FROM claims
-    GROUP BY Month
-    ORDER BY Month;
-""")
-
 
