@@ -5,58 +5,88 @@
 # food_listings(Food_ID, Food_Name, Quantity, Expiry_Date, Provider_ID, Provider_Type, Location)
 # claims(Claim_ID, Food_ID, Receiver_ID, Claim_Date, Status)   # if present
 
-import sqlite3
 import pandas as pd
 import streamlit as st
 import altair as alt
-from datetime import date
+from datetime import datetime
 
-DB_PATH = "database/food_wastage.db"
+# ---------- File Paths ----------
+PROVIDERS_CSV = "data/providers.csv"
+RECEIVERS_CSV = "data/receivers.csv"
+FOOD_CSV = "data/food_listings.csv"
+CLAIMS_CSV = "data/claims.csv"
 
-# ---------- DB helpers ----------
-def run_query(query: str, params: tuple | None = None) -> pd.DataFrame:
-    """Return a DataFrame or empty DataFrame on any error."""
+# ---------- Load Data ----------
+@st.cache_data
+def load_csv(path):
     try:
-        conn = sqlite3.connect(DB_PATH)
-        df = pd.read_sql_query(query, conn, params=params)
-        conn.close()
-        return df
+        return pd.read_csv(path)
     except Exception as e:
-        st.info(f"ℹ️ {e}")
+        st.error(f"Error loading {path}: {e}")
         return pd.DataFrame()
 
-def exec_query(query: str, params: tuple | None = None) -> bool:
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cur = conn.cursor()
-        cur.execute(query, params or ())
-        conn.commit()
-        conn.close()
-        return True
-    except Exception as e:
-        st.error(f"❌ {e}")
-        return False
+providers = load_csv(PROVIDERS_CSV)
+receivers = load_csv(RECEIVERS_CSV)
+food = load_csv(FOOD_CSV)
+claims = load_csv(CLAIMS_CSV)
 
-def table_exists(name: str) -> bool:
-    q = "SELECT name FROM sqlite_master WHERE type='table' AND lower(name)=lower(?);"
-    return not run_query(q, (name,)).empty
+# ---------- App Layout ----------
+st.set_page_config(page_title="Local Food Wastage Management", layout="wide")
+st.title("🍽️ Local Food Wastage Management System")
 
-# ---------- UI helpers ----------
-def kpi(label: str, value):
-    c1, c2, c3 = st.columns([1, 2, 1])
-    with c2:
-        st.metric(label, value)
+st.sidebar.header("📂 Navigation")
+page = st.sidebar.radio("Go to", ["Dashboard", "Food Listings", "Claims", "Providers", "Receivers"])
 
-def chart_or_msg(df: pd.DataFrame, chart_fn, *args, **kwargs):
-    if df is None or df.empty:
-        st.warning("No data available.")
+# ---------- Dashboard ----------
+if page == "Dashboard":
+    st.subheader("📊 Dashboard Overview")
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Providers", len(providers))
+    col2.metric("Total Receivers", len(receivers))
+    col3.metric("Available Foods", food["Quantity"].sum() if not food.empty else 0)
+
+    if not claims.empty:
+        food_claims = claims.merge(food, on="Food_ID", how="left")
+        chart = alt.Chart(food_claims).mark_bar().encode(
+            x="Food_Name",
+            y="count()",
+            color="Status"
+        ).properties(title="Food Claims Distribution")
+        st.altair_chart(chart, use_container_width=True)
+
+# ---------- Food Listings ----------
+elif page == "Food Listings":
+    st.subheader("🥘 Food Listings")
+    if not food.empty:
+        st.dataframe(food)
     else:
-        chart_fn(df, *args, **kwargs)
+        st.info("No food listings available.")
 
-# ---------- DASHBOARD ----------
-def dashboard():
-    st.title("Local Food Wastage Management System")
-    st.header("Local Food Wastage Dashboard")
+# ---------- Claims ----------
+elif page == "Claims":
+    st.subheader("📝 Claims")
+    if not claims.empty:
+        claims_view = claims.merge(food, on="Food_ID", how="left").merge(receivers, on="Receiver_ID", how="left")
+        st.dataframe(claims_view)
+    else:
+        st.info("No claims recorded.")
+
+# ---------- Providers ----------
+elif page == "Providers":
+    st.subheader("🏭 Providers")
+    if not providers.empty:
+        st.dataframe(providers)
+    else:
+        st.info("No providers available.")
+
+# ---------- Receivers ----------
+elif page == "Receivers":
+    st.subheader("🙋 Receivers")
+    if not receivers.empty:
+        st.dataframe(receivers)
+    else:
+        st.info("No receivers available.")
 
     # KPIs
     total_providers = run_query("SELECT COUNT(*) AS cnt FROM providers;") if table_exists("providers") else pd.DataFrame([{"cnt": 0}])
