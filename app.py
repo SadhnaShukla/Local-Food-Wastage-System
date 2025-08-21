@@ -11,10 +11,11 @@ import altair as alt
 from datetime import datetime
 
 # ---------- File Paths ----------
-PROVIDERS_CSV = "data/providers.csv"
-RECEIVERS_CSV = "data/receivers.csv"
-FOOD_CSV = "data/food_listings.csv"
-CLAIMS_CSV = "data/claims.csv"
+PROVIDERS_CSV = "providers.csv"
+RECEIVERS_CSV = "receivers.csv"
+FOOD_CSV = "food_listings.csv"
+CLAIMS_CSV = "claims.csv"
+
 
 # ---------- Load Data ----------
 @st.cache_data
